@@ -1,0 +1,14 @@
+*.spyderproject
+*.pro.*
+*.pro
+*.pyc
+*.session.tar
+*.autosave
+/src/qt_designer
+/ui2
+*.numbers
+*.graffle
+
+*.idea
+
+Makefile
