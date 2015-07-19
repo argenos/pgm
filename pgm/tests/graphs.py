@@ -68,4 +68,3 @@ cli = nx.make_max_clique_graph(ex2)
 plt.figure()
 nx.draw_networkx(cli,with_labels=True)
 
-plt.show()

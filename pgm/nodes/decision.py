@@ -24,9 +24,20 @@ import node
 class Decision(node.Node):
     def __init__(self, name, parents=None, children=None, domain=None):
         if domain is None:
-            domain = ['d1', 'd2']
-        super(Decision, self).__init__(name, parents, children, domain)
+            self.domain = ['d1', 'd2']
+        else:
+            self.domain = domain[:]
+        super(Decision, self).__init__(name, parents, children)
+
+    def __str__(self):
+        return '[%s]' % self.name
+
+    def validate(self):
+        pass
 
     @property
     def graph(self):
         return pydot.Node(name=self.name, shape='box')
+
+    def __repr__(self):
+        return '<Decision Node %s>' % self.name

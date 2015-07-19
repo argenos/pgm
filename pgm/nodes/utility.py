@@ -22,37 +22,51 @@ import numpy as np
 
 
 class Utility(node.Node):
+    def __init__(self, name, parents=None, children=None):
+        super(Utility, self).__init__(name, parents, children)
+        self._ut = UT(self._name, self._parents)
+
+    def validate(self):
+        self._ut = UT(self._name, self._parents)
+
     def graph(self):
         return pydot.Node(name=self.name, shape='diamond')
 
     def __repr__(self):
         return '<Utility %s>' % self.name
 
+    def __str__(self):
+        return '<%s>' % self.name
+
+    @property
     def ut(self):
-        # Index for parents
-        """
-        index = MultiIndex.from_product([rain, sprinkler],names = ['rain','sprinkler'])
-        cols = MultiIndex.from_product([['Grass'],domain])
-        df = DataFrame(np.random.rand(4,2),index,columns=cols)
-        :return:
-        """
+        return self._ut
 
-        parents_names = []
-        parents_domains = []
-        m = 1
-        n = 1
-        for parent in self.parents:
-            parents_names.append(parent.name)
-            parents_domains.append(parent.domain)
-            m = m * parent.domain.__len__()
+    @ut.setter
+    def ut(self, table):
+        self._ut.table = table
 
-        # print rows, m
-        # cols = MultiIndex.from_product([self.domain], names=[self.name])
-
-        if self.parents.__len__() != 0:
-            rows = MultiIndex.from_product(parents_domains, names=parents_names)
-            u = DataFrame(np.random.rand(m, n), index=rows, columns=['Utility'])
+class UT(node.Table):
+    def __init__(self, node_name, parents=None):
+        super(UT, self).__init__(node_name)
+        self.m = 1
+        self.n = 1
+        if parents is None or parents.__len__() == 0:
+            self.rows = [self._name]
         else:
-            u = DataFrame(np.random.rand(m, n), columns=['Utility'])
+            parents_names = []
+            parents_domains = []
+            for parent in parents:
+                parents_names.append(parent.name)
+                parents_domains.append(parent.domain)
+                self.m = self.m * parent.domain.__len__()
+            self.rows = MultiIndex.from_product(parents_domains, names=parents_names)
+        self.cols = ['Utility']
 
-        print u
+        # self._table = DataFrame(np.zeros((0, self.n)), columns=self.cols)
+        self._table = DataFrame(np.zeros((self.m, self.n)), index=self.rows, columns=self.cols)
+        #print self._table
+
+    def __repr__(self):
+        return '<Utility Table %s>' % self._name
+

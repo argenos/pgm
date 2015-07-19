@@ -23,75 +23,93 @@ import numpy as np
 
 
 class Chance(node.Node):
-
-    def jpt(self):
-        # Index for parents
-        '''
-        index = MultiIndex.from_product([rain, sprinkler],names = ['rain','sprinkler'])
-        cols = MultiIndex.from_product([['Grass'],domain])
-        df = DataFrame(np.random.rand(4,2),index,columns=cols)
-        :return:
-        '''
-
-        parents_names = []
-        parents_domains = []
-        m = 1
-        n = self.domain.__len__()
-        for parent in self.parents:
-            parents_names.append(parent.name)
-            parents_domains.append(parent.domain)
-            m = m * parent.domain.__len__()
-
-        cols = MultiIndex.from_product([self.domain], names=[self.name])
-
-        if self.parents.__len__() != 0:
-            rows = MultiIndex.from_product(parents_domains, names=parents_names)
-            t = DataFrame(np.random.rand(m, n), index=rows, columns=cols)
+    def __init__(self, name, parents=None, children=None, domain=None):
+        if domain is None:
+            self._domain = ['T', 'F']
         else:
-            t = DataFrame(np.random.rand(m, n), columns=cols)
+            self._domain = domain[:]
+        super(Chance, self).__init__(name, parents, children)
+        self._jpt = CPT(self._name, self._parents, self._domain)
 
-        print t
+    def __repr__(self):
+        return '<Chance Node %s>' % self.name
 
-    @property
-    def domain(self):
-        return self._domain
+    def __str__(self):
+        return '(%s)' % self.name
 
-    @property
-    def parents(self):
-        return self._parents
-
-    @property
-    def children(self):
-        return self._children
+    def validate(self):
+        self._jpt = CPT(self._name, self._parents, self._domain)
 
     @property
-    def name(self):
-        return self._id
+    def jpt(self):
+        return self._jpt
 
-    @domain.setter
-    def domain(self, value):
-        self._domain = value
+    @jpt.setter
+    def jpt(self, table):
+        self._jpt.table = table
 
-    @parents.setter
-    def parents(self, value):
-        self._parents = value
 
-    @children.setter
-    def children(self, value):
-        self._children = value
+class CPT(node.Table):
+    def __init__(self, node_name, parents=None, node_domain=None):
+        super(CPT, self).__init__(node_name)
 
-    @name.setter
-    def name(self, value):
-        self._id = value
+        if node_domain is None or node_domain.__len__() == 0:
+            self._domain = ['T', 'F']
+        else:
+            self._domain = node_domain[:]
+
+        self.m = 1
+        self.n = self._domain.__len__()
+
+        if parents is None or parents.__len__() == 0:
+            self.rows = [self._name]
+            self.cols = MultiIndex.from_product([self._domain])
+        else:
+            parents_names = []
+            parents_domains = []
+            for parent in parents:
+                parents_names.append(parent.name)
+                parents_domains.append(parent.domain)
+                self.m = self.m * parent.domain.__len__()
+            self.cols = MultiIndex.from_product([self._domain], names=[self._name])
+            self.rows = MultiIndex.from_product(parents_domains, names=parents_names)
+
+        self._values = np.zeros((self.m, self.n))
+        self._table = DataFrame(self._values, index=self.rows, columns=self.cols)
+
+    @property
+    def table(self):
+        return self._table
+
+    @table.setter
+    def table(self, value):
+        assert value.shape == (self.m, self.n)
+        self._table = DataFrame(value, index=self.rows, columns=self.cols)
+        # print self._table
+
+    def __repr__(self):
+        return '<CPT %s>' % self._name
 
 
 if __name__ == "__main__":
     a = Chance('a')
     b = Chance('b')
     c = Chance('c', parents=[a, b])
-    c.jpt()
 
-    # print a.domain
-    # print a.parents
-    # print a.children
-    # print c.domain
+    c.jpt = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+    # print c.jpt
+
+    '''
+    x = CPT('x')
+    print x.table
+    j = np.array([[1,5]])
+    print j
+    x.table = j
+    print x.table
+    '''
+    '''
+    print a._domain
+    print a.parents
+    print a.children
+    print c._domain
+    '''
