@@ -24,16 +24,16 @@ import networkx as nx
 from pgm.nodes.chance import Chance
 from pgm.nodes.decision import Decision
 from pgm.nodes.utility import Utility
-from pgm.utils.tools import draw, node_types
+from pgm.utils.tools import draw, node_types, ancestors
 from pgm.networks.jt import TriangulatedGraph, JoinTree, StronJunctionTree
 
 
 class ID(object):
-    def __init__(self, title, nodes=None, edges=None):
+    def __init__(self, name, nodes=None, edges=None):
         print 'Influence Diagram'
-        self.title = title
-        self.net = nx.DiGraph(name=title)
-        self._moralgraph = nx.Graph()
+        self.title = name
+        self.net = nx.DiGraph(title=name)
+        self._moralgraph = nx.Graph(title=name + '_moral')
 
         if nodes is None:
             self.nodes = []
@@ -41,12 +41,7 @@ class ID(object):
             self.nodes = [n.node for n in nodes]
             self.net.add_nodes_from(self.nodes)
 
-        print self.net.nodes()
-        self.decision, self.chance, self.utility = node_types(self.net)
-
-        print self.decision
-        print self.chance
-        print self.utility
+        self.chance, self.decision, self.utility = node_types(self.net)
 
         if edges is None:
             self.edges = []
@@ -54,16 +49,37 @@ class ID(object):
             self.edges = [(e[0].name, e[1].name) for e in edges]
             self.net.add_edges_from(self.edges)
 
-        print self.net.edges()
+        self.windows = []
+        self.temporal_order()
 
-    def node_types(self):
-        for n in self.nodes:
-            if isinstance(n, Chance):
-                self.chance.append(n)
-            elif isinstance(n, Decision):
-                self.decision.append(n)
-            elif isinstance(n, Utility):
-                self.utility.append(n)
+    def temporal_order(self):
+        n = 0
+        k = len(self.decision)
+        des = []
+        for d in self.decision:
+            pred = nx.predecessor(self.net, d)
+            pred = list(set(pred.keys()) & set(self.decision))
+            pred.remove(d)
+            des.insert(len(pred), d)
+            # print d, len(pred), des
+
+        des = des[::-1]
+
+        for d in des:
+            pred = self.net.predecessors(d)
+            pred = list(set(pred).difference(set(self.decision)))
+            # self.windows.insert(n, pred)
+            self.windows.extend(pred)
+            n = n + 1
+            # self.windows.insert(n, d)
+            self.windows.append(d)
+            n = n + 1
+            # print self.windows
+
+        unobserved = list(set(self.chance).difference(self.windows))
+        self.windows.extend(unobserved)
+        # print self.windows
+
 
     def show(self):
         nx.draw_networkx(self.net)
@@ -71,10 +87,6 @@ class ID(object):
 
     def validate(self, verbose=False):
         for n in self.net.nodes():
-            # n.parents = self.net.predecessors(n)
-            # n.children = self.net.successors(n)
-            # n.neighbors = self.net.neighbors(n)
-            # n.validate()
             if verbose:
                 print '----------'
                 print n
@@ -100,6 +112,7 @@ class ID(object):
 
     def triangulate(self):
         tgraph = TriangulatedGraph(self.net, self._moralgraph)
+        return tgraph
 
     @property
     def evidence(self):
@@ -111,7 +124,7 @@ class ID(object):
 
     @property
     def moralgraph(self):
-        draw(self._moralgraph, 'moral_graph')
+        draw(self._moralgraph)
         return self._moralgraph
 
 
@@ -143,6 +156,7 @@ class MoralGraph(object):
         for n in self.graph.nodes_iter():
             moral_edges.extend(list(combinations(self.graph.predecessors(n), 2)))
         self.graph.add_edges_from(moral_edges)
+        # k[::-1] reverses a tuple
         # draw(self.graph, '3_moral_links')
 
         # Convert to undirected graph
@@ -251,11 +265,11 @@ def nx_example():
     nodes = chance + decision + utility
 
     test = ID('Test', nodes, edges)
-    # test.validate(True)
+    test.validate()
     test.moralize()
     print nx.is_chordal(test.moralgraph)
-    # cliques = list(nx.find_cliques(test.moralgraph))
-    # print cliques
+    cliques = list(nx.find_cliques(test.moralgraph))
+    print cliques
     test.triangulate()
 
 

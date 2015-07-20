@@ -26,7 +26,7 @@ from pgm.nodes.chance import Chance
 from pgm.nodes.decision import Decision
 from pgm.nodes.utility import Utility
 
-from pgm.utils.tools import draw, node_types
+from pgm.utils.tools import draw, node_types, ancestors
 
 class TriangulatedGraph(object):
     def __init__(self, graph, ugraph):
@@ -41,6 +41,8 @@ class TriangulatedGraph(object):
         self.ordering = []
 
         self.chance, self.decision, self.utility = node_types(self.graph)
+
+
 
 
     def neighbors(self, node):

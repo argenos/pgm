@@ -23,8 +23,7 @@ __license__ = "GPL"
 __version__ = "1.0"
 __maintainer__ = "Argentina Ortega Sainz"
 __email__ = "argentina.ortega@smail.inf.h-brs.de"
-__status__ = "Development" 
-
+__status__ = "Development"
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -48,13 +47,33 @@ def node_types(graph):
 
     return chance, decision, utility
 
+
 def node_type(n):
     return n['type']
 
-def draw(graph, title='graph.png', show=False):
+
+def ancestors(graph, nodes):
+    print 'Ancestors***'
+    anc = []
+    for n in nodes:
+        print n
+    for a in graph.predecessors_iter(n):
+        anc.append(a)
+        for i in graph.predecessors_iter(a):
+            print i
+            ancestors(graph, i)
+    return list(set(anc))
+
+def ancestor(graph, n):
+    return graph.predecessors(n)
+
+
+def draw(graph, show=False, save=False):
     # 's' = square
     # 'D' = diamond
     # 'o' = circle
+
+    title = graph.graph['title']
 
     plt.figure()
 
@@ -71,8 +90,9 @@ def draw(graph, title='graph.png', show=False):
     nx.draw_networkx_edges(graph, pos=pos)
     nx.draw_networkx_labels(graph, pos=pos)
 
-    #nx.write_dot(graph, title + '.dot')
-    #plt.savefig(title + '.png')
+    if save:
+        nx.write_dot(graph, title + '.dot')
+        plt.savefig(title + '.png')
 
     if show:
         plt.show()
