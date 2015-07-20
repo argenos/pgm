@@ -33,23 +33,23 @@ from pgm.nodes.decision import Decision
 from pgm.nodes.utility import Utility
 
 
-def node_types(nodes):
+def node_types(graph):
     chance = []
     decision = []
     utility = []
-    # decision = [n for n in G if G.node[n]['node'] == 'decision']
-    # chance = [n for n in G if G.node[n]['node'] == 'chance']
-    # utility = [n for n in G if G.node[n]['node'] == 'utility']
-    for n in nodes:
-        if isinstance(n, Chance):
+
+    for n in graph:
+        if graph.node[n]['type'] == 'chance':
             chance.append(n)
-        elif isinstance(n, Decision):
+        elif graph.node[n]['type'] == 'decision':
             decision.append(n)
-        elif isinstance(n, Utility):
+        elif graph.node[n]['type'] == 'utility':
             utility.append(n)
 
     return chance, decision, utility
 
+def node_type(n):
+    return n['type']
 
 def draw(graph, title='graph.png', show=False):
     # 's' = square
@@ -58,7 +58,7 @@ def draw(graph, title='graph.png', show=False):
 
     plt.figure()
 
-    chance, decision, utility = node_types(graph.nodes())
+    chance, decision, utility = node_types(graph)
     pos = nx.graphviz_layout(graph, prog='dot')
 
     if len(chance) > 0:

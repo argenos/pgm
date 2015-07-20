@@ -35,23 +35,26 @@ class ID(object):
         self.net = nx.DiGraph(name=title)
         self._moralgraph = nx.Graph()
 
-
         if nodes is None:
             self.nodes = []
         else:
-            self.nodes = nodes[:]
-            #self.node_types()
+            self.nodes = [n.node for n in nodes]
             self.net.add_nodes_from(self.nodes)
 
-        # self.decision = [n for n in G if G.node[n]['node'] == 'decision']
-        # self.chance = [n for n in G if G.node[n]['node'] == 'chance']
-        # self.utility = [n for n in G if G.node[n]['node'] == 'utility']
+        print self.net.nodes()
+        self.decision, self.chance, self.utility = node_types(self.net)
+
+        print self.decision
+        print self.chance
+        print self.utility
 
         if edges is None:
             self.edges = []
         else:
-            self.edges = edges[:]
+            self.edges = [(e[0].name, e[1].name) for e in edges]
             self.net.add_edges_from(self.edges)
+
+        print self.net.edges()
 
     def node_types(self):
         for n in self.nodes:
@@ -127,31 +130,28 @@ class MoralGraph(object):
         self.graph = graph.copy()
         # draw(self.graph, '1_graph')
 
-        self.chance, self.decision, self.utility = node_types(self.graph.nodes())
+        self.chance, self.decision, self.utility = node_types(self.graph)
 
         # Remove information links
         for n in self.decision:
-            for p in n.parents:
+            for p in self.graph.predecessors(n):
                 self.graph.remove_edge(p, n)
         # draw(self.graph, "2_no_info_links")
 
         # Add moral links
         moral_edges = []
-        for n in self.graph.nodes():
-            moral_edges.extend(list(combinations(n.parents, 2)))
+        for n in self.graph.nodes_iter():
+            moral_edges.extend(list(combinations(self.graph.predecessors(n), 2)))
         self.graph.add_edges_from(moral_edges)
         # draw(self.graph, '3_moral_links')
 
         # Convert to undirected graph
-        # self.ugraph = nx.Graph(self.graph)
         self.ugraph = self.graph.to_undirected()
         # draw(self.ugraph, '4_undirected')
 
         # Remove utility nodes
         self.ugraph.remove_nodes_from(self.utility)
         # draw(self.ugraph, '5_moral_graph')
-
-        print self.decision[0] in self.ugraph
 
     @property
     def moralgraph(self):
@@ -216,6 +216,50 @@ def test_example():
     test.moralize()
 
 
+def nx_example():
+    a = Chance('A')
+    b = Chance('B')
+    c = Chance('C')
+    d = Chance('D')
+    e = Chance('E')
+    f = Chance('F')
+    g = Chance('G')
+    h = Chance('H')
+    i = Chance('I')
+    j = Chance('J')
+    k = Chance('K')
+    l = Chance('L')
+
+    d1 = Decision('D1')
+    d2 = Decision('D2')
+    d3 = Decision('D3')
+    d4 = Decision('D4')
+
+    v1 = Utility('V1')
+    v2 = Utility('V2')
+    v3 = Utility('V3')
+    v4 = Utility('V4')
+
+    chance = [a, b, c, d, e, f, g, h, i, j, k, l]
+    decision = [d1, d2, d3, d4]
+    utility = [v1, v2, v3, v4]
+
+    edges = [(a, c), (b, c), (b, d1), (b, d), (d1, v1), (d1, d),
+             (c, e), (d, e), (d, f), (e, g), (e, d2), (f, d2), (f, h),
+             (g, d4), (g, i), (d2, i), (d2, d3), (h, k), (h, j), (d3, k), (d3, v2), (d3, d4),
+             (d4, l), (i, l), (j, v3), (k, v3), (l, v4)]
+    nodes = chance + decision + utility
+
+    test = ID('Test', nodes, edges)
+    # test.validate(True)
+    test.moralize()
+    print nx.is_chordal(test.moralgraph)
+    # cliques = list(nx.find_cliques(test.moralgraph))
+    # print cliques
+    test.triangulate()
+
+
 if __name__ == '__main__':
     # weather_example()
-    test_example()
+    # test_example()
+    nx_example()

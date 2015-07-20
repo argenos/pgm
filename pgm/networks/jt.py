@@ -40,12 +40,8 @@ class TriangulatedGraph(object):
         self.ugraph = ugraph.copy()
         self.ordering = []
 
-        self.chance, self.decision, self.utility = node_types(self.graph.nodes())
-        # print self.ugraph.nodes()
-        # print self.graph.nodes()
+        self.chance, self.decision, self.utility = node_types(self.graph)
 
-        for d in self.decision:
-            print d in self.ugraph
 
     def neighbors(self, node):
         pass
