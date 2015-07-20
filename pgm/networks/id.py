@@ -24,25 +24,28 @@ import networkx as nx
 from pgm.nodes.chance import Chance
 from pgm.nodes.decision import Decision
 from pgm.nodes.utility import Utility
+from pgm.utils.tools import draw, node_types
+from pgm.networks.jt import TriangulatedGraph, JoinTree, StronJunctionTree
 
 
 class ID(object):
     def __init__(self, title, nodes=None, edges=None):
         print 'Influence Diagram'
         self.title = title
-        self.net = nx.DiGraph()
+        self.net = nx.DiGraph(name=title)
         self._moralgraph = nx.Graph()
 
-        self.decision = []
-        self.chance = []
-        self.utility = []
 
         if nodes is None:
             self.nodes = []
         else:
             self.nodes = nodes[:]
-            self.node_types()
+            #self.node_types()
             self.net.add_nodes_from(self.nodes)
+
+        # self.decision = [n for n in G if G.node[n]['node'] == 'decision']
+        # self.chance = [n for n in G if G.node[n]['node'] == 'chance']
+        # self.utility = [n for n in G if G.node[n]['node'] == 'utility']
 
         if edges is None:
             self.edges = []
@@ -64,18 +67,19 @@ class ID(object):
         plt.show()
 
     def validate(self, verbose=False):
-        for n in self.nodes:
-            n.parents = self.net.predecessors(n)
-            n.children = self.net.successors(n)
-            n.neighbors = self.net.neighbors(n)
-            n.validate()
+        for n in self.net.nodes():
+            # n.parents = self.net.predecessors(n)
+            # n.children = self.net.successors(n)
+            # n.neighbors = self.net.neighbors(n)
+            # n.validate()
             if verbose:
                 print '----------'
                 print n
                 print '----------'
-                print 'Parents: ' + n.parents.__str__()
-                print 'Children: ' + n.children.__str__()
-                print 'Neighbors: ' + n.neighbors.__str__()
+                print 'Parents: ' + self.net.predecessors(n).__str__()
+                print 'Children: ' + self.net.successors(n).__str__()
+                print 'Neighbors: ' + self.net.neighbors(n).__str__()
+                print
         print 'ID is validated.'
 
     def add_nodes(self, new):
@@ -90,6 +94,22 @@ class ID(object):
     def moralize(self):
         moral = MoralGraph(self.net)
         self._moralgraph = moral.moralgraph
+
+    def triangulate(self):
+        tgraph = TriangulatedGraph(self.net, self._moralgraph)
+
+    @property
+    def evidence(self):
+        return 0
+
+    @evidence.setter
+    def evidence(self, ev):
+        pass
+
+    @property
+    def moralgraph(self):
+        draw(self._moralgraph, 'moral_graph')
+        return self._moralgraph
 
 
 class MoralGraph(object):
@@ -123,61 +143,19 @@ class MoralGraph(object):
         # draw(self.graph, '3_moral_links')
 
         # Convert to undirected graph
-        self.ugraph = nx.Graph(self.graph)
+        # self.ugraph = nx.Graph(self.graph)
+        self.ugraph = self.graph.to_undirected()
         # draw(self.ugraph, '4_undirected')
 
         # Remove utility nodes
         self.ugraph.remove_nodes_from(self.utility)
-
-        print self.ugraph.edges()
-        print nx.is_chordal(self.ugraph)
         # draw(self.ugraph, '5_moral_graph')
+
+        print self.decision[0] in self.ugraph
 
     @property
     def moralgraph(self):
         return self.ugraph
-
-
-def node_types(nodes):
-    chance = []
-    decision = []
-    utility = []
-    for n in nodes:
-        if isinstance(n, Chance):
-            chance.append(n)
-        elif isinstance(n, Decision):
-            decision.append(n)
-        elif isinstance(n, Utility):
-            utility.append(n)
-
-    return chance, decision, utility
-
-
-def draw(graph, title='graph.png', show=False):
-    # 's' = square
-    # 'D' = diamond
-    # 'o' = circle
-
-    plt.figure()
-
-    chance, decision, utility = node_types(graph.nodes())
-    pos = nx.graphviz_layout(graph, prog='dot')
-
-    if len(chance) > 0:
-        nx.draw_networkx_nodes(graph, pos, nodelist=chance, node_size=800)
-    if len(decision) > 0:
-        nx.draw_networkx_nodes(graph, pos, nodelist=decision, node_size=800, node_shape='s')
-    if len(utility) > 0:
-        nx.draw_networkx_nodes(graph, pos, nodelist=utility, node_size=800, node_shape='D')
-
-    nx.draw_networkx_edges(graph, pos=pos)
-    nx.draw_networkx_labels(graph, pos=pos)
-
-    nx.write_dot(graph, title + '.dot')
-    plt.savefig(title + '.png')
-
-    if show:
-        plt.show()
 
 
 def weather_example():

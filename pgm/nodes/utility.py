@@ -46,6 +46,11 @@ class Utility(node.Node):
     def ut(self, table):
         self._ut.table = table
 
+    @property
+    def node(self):
+        attr = (('type', 'utility'), ('ut', self._ut))
+        return self._name, dict(attr)
+
 class UT(node.Table):
     def __init__(self, node_name, parents=None):
         super(UT, self).__init__(node_name)

@@ -39,5 +39,10 @@ class Decision(node.Node):
     def graph(self):
         return pydot.Node(name=self.name, shape='box')
 
+    @property
+    def node(self):
+        attr = (('type', 'decision'), ('domain', self._domain))
+        return self._name, dict(attr)
+
     def __repr__(self):
         return '<Decision Node %s>' % self.name

@@ -41,6 +41,16 @@ class Chance(node.Node):
         self._jpt = CPT(self._name, self._parents, self._domain)
 
     @property
+    def node(self):
+        attr = (('type', 'chance'), ('domain', self._domain), ('jpt', self._jpt))
+        return self._name, dict(attr)
+
+    @property
+    def edge(self):
+        attr = (('type', 'causal'))
+        return dict(attr)
+
+    @property
     def jpt(self):
         return self._jpt
 
