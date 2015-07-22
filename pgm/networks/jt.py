@@ -17,39 +17,47 @@ __maintainer__ = "Argentina Ortega Sainz"
 __email__ = "argentina.ortega@smail.inf.h-brs.de"
 __status__ = "Development"
 
-import matplotlib.pyplot as plt
-
-from itertools import combinations
 import networkx as nx
 
-from pgm.nodes.chance import Chance
-from pgm.nodes.decision import Decision
-from pgm.nodes.utility import Utility
+from pgm.utils.tools import node_types, draw_graph
 
-from pgm.utils.tools import draw, node_types, ancestors
 
 class TriangulatedGraph(object):
-    def __init__(self, graph, ugraph):
+    def __init__(self, ugraph, partial_order):
         """
 
 
         :type ugraph: DiGraph
-        :type graph: Graph
+        :type partial_order: Tuple
         """
-        self.graph = graph.copy()
+        assert isinstance(ugraph, nx.Graph)
+        # assert isinstance(window, list)
+
         self.ugraph = ugraph.copy()
-        self.ordering = []
+        # print len(self.ugraph.edges())
+        self.window, self.ordering = partial_order
 
-        self.chance, self.decision, self.utility = node_types(self.graph)
+        self.chance, self.decision, self.utility = node_types(self.ugraph)
 
+        self.graph = nx.DiGraph(title='triangulated')
+        self.graph.add_nodes_from(self.ugraph.nodes(data=True))
+        # print self.graph.node
+        # print len(self.graph.edges())
+        # self.graph.add_nodes_from(self.ugraph.to_directed())
+        # print self.ugraph.edges()
 
+        for e in self.ugraph.edges_iter():
+            if self.ordering.get(e[0]) > self.ordering.get(e[1]):
+                # print e[0],'->',e[1]
+                self.graph.add_edge(e[1], e[0])
+            else:
+                self.graph.add_edge(e[0], e[1])
 
+        # print self.graph.edges()
 
-    def neighbors(self, node):
-        pass
+        draw_graph(self.graph, True)
 
-
-    #Get strong elimination order In, Dn, In-1, Dn-1...
+    # Get strong elimination order In, Dn, In-1, Dn-1...
     '''
     1. Eliminate simplicial node X; fa(x) is a clique candidate
     2. if fa(x) does not include all remaining nodes go to 1
@@ -66,5 +74,3 @@ class JoinTree(object):
 class StronJunctionTree(object):
     def __init__(self):
         pass
-
-

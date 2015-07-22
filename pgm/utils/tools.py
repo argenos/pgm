@@ -51,24 +51,11 @@ def node_types(graph):
 def node_type(n):
     return n['type']
 
+def reverse_edge(graph, edge):
+    #graph.remove_edge(edge[0], edge[1])
+    graph.add_edge(edge[1], edge[0])
 
-def ancestors(graph, nodes):
-    print 'Ancestors***'
-    anc = []
-    for n in nodes:
-        print n
-    for a in graph.predecessors_iter(n):
-        anc.append(a)
-        for i in graph.predecessors_iter(a):
-            print i
-            ancestors(graph, i)
-    return list(set(anc))
-
-def ancestor(graph, n):
-    return graph.predecessors(n)
-
-
-def draw(graph, show=False, save=False):
+def draw_graph(graph, show=False, save=False):
     # 's' = square
     # 'D' = diamond
     # 'o' = circle
@@ -81,11 +68,11 @@ def draw(graph, show=False, save=False):
     pos = nx.graphviz_layout(graph, prog='dot')
 
     if len(chance) > 0:
-        nx.draw_networkx_nodes(graph, pos, nodelist=chance, node_size=800)
+        nx.draw_networkx_nodes(graph, pos, nodelist=chance, node_size=200)
     if len(decision) > 0:
-        nx.draw_networkx_nodes(graph, pos, nodelist=decision, node_size=800, node_shape='s')
+        nx.draw_networkx_nodes(graph, pos, nodelist=decision, node_size=200, node_shape='s')
     if len(utility) > 0:
-        nx.draw_networkx_nodes(graph, pos, nodelist=utility, node_size=800, node_shape='D')
+        nx.draw_networkx_nodes(graph, pos, nodelist=utility, node_size=200, node_shape='D')
 
     nx.draw_networkx_edges(graph, pos=pos)
     nx.draw_networkx_labels(graph, pos=pos)
