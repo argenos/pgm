@@ -56,6 +56,7 @@ def reverse_edge(graph, edge):
     #graph.remove_edge(edge[0], edge[1])
     graph.add_edge(edge[1], edge[0])
 
+# TODO: [ ] Plot edges type (nx.draw_networkx_edges(G, pos, edgelist=edges, width=6, alpha=0.5, edge_color='b', style='dashed')
 def draw_graph(graph, pos=None, size=600, alpha=0.9, show=False, save=False):
     title = graph.graph['title']
 
