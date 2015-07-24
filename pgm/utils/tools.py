@@ -2,10 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-pgm:tools
-
-This module...
-
+Tools for dealing with nodes and drawing graphs.
 
 Example:
     Examples.... bla bla bla::
@@ -15,6 +12,10 @@ Example:
 Section break
 
 """
+
+import matplotlib.pyplot as plt
+import networkx as nx
+
 __author__ = "Argentina Ortega Sainz"
 __copyright__ = "Copyright 2015, Argentina Ortega Sainz"
 __credits__ = ["Argentina Ortega Sainz"]
@@ -25,12 +26,7 @@ __maintainer__ = "Argentina Ortega Sainz"
 __email__ = "argentina.ortega@smail.inf.h-brs.de"
 __status__ = "Development"
 
-import matplotlib.pyplot as plt
-import networkx as nx
-from pgm.nodes.chance import Chance
-from pgm.nodes.decision import Decision
-from pgm.nodes.utility import Utility
-
+__all__ = ['node_types', 'draw_graph']
 
 def node_types(graph):
     chance = []
@@ -45,28 +41,31 @@ def node_types(graph):
         elif graph.node[n]['type'] == 'utility':
             utility.append(n)
 
-    nodes = {'chance':chance, 'decision':decision, 'utility':utility}
+    nodes = {'chance': chance, 'decision': decision, 'utility': utility}
 
     return nodes
+
 
 def node_type(n):
     return n['type']
 
+
 def reverse_edge(graph, edge):
-    #graph.remove_edge(edge[0], edge[1])
+    # graph.remove_edge(edge[0], edge[1])
     graph.add_edge(edge[1], edge[0])
 
-# TODO: [ ] Plot edges type (nx.draw_networkx_edges(G, pos, edgelist=edges, width=6, alpha=0.5, edge_color='b', style='dashed')
+
+# TODO: [ ] Plot edges type
 def draw_graph(graph, pos=None, size=600, alpha=0.9, show=False, save=False):
     title = graph.graph['title']
 
     plt.figure()
     plt.axis('off')
 
-    if pos==None:
+    if pos is None:
         p = nx.graphviz_layout(graph, prog='dot')
     else:
-        p=pos
+        p = pos
 
     node_dict = node_types(graph)
     chance, decision, utility = node_dict.get('chance'), node_dict.get('decision'), node_dict.get('utility')
@@ -74,10 +73,11 @@ def draw_graph(graph, pos=None, size=600, alpha=0.9, show=False, save=False):
     if len(chance) > 0:
         nx.draw_networkx_nodes(graph, p, nodelist=chance, node_size=size, node_shape='o', alpha=alpha, node_color='w')
     if len(decision) > 0:
-        nx.draw_networkx_nodes(graph, p, nodelist=decision, node_size=size, node_shape='s',alpha=alpha, node_color='g')
+        nx.draw_networkx_nodes(graph, p, nodelist=decision, node_size=size, node_shape='s', alpha=alpha, node_color='g')
     if len(utility) > 0:
         nx.draw_networkx_nodes(graph, p, nodelist=utility, node_size=size, node_shape='D', alpha=alpha, node_color='r')
 
+    # Edges type: nx.draw_networkx_edges(G, pos, edgelist=edges, width=6, alpha=0.5, edge_color='b', style='dashed')
     nx.draw_networkx_edges(graph, pos=p)
     nx.draw_networkx_labels(graph, pos=p)
 
