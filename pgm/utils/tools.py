@@ -57,7 +57,10 @@ def reverse_edge(graph, edge):
 
 # TODO: [ ] Plot edges type
 def draw_graph(graph, pos=None, size=600, alpha=0.9, show=False, save=False):
-    title = graph.graph['title']
+    if graph.name == '':
+        title = 'graph'
+    else:
+        title = graph.name
 
     plt.figure()
     plt.axis('off')
