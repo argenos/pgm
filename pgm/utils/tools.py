@@ -28,10 +28,12 @@ __status__ = "Development"
 
 __all__ = ['node_types', 'draw_graph']
 
+
 def node_types(graph):
     chance = []
     decision = []
     utility = []
+    cliques = []
 
     for n in graph:
         if graph.node[n]['type'] == 'chance':
@@ -40,8 +42,10 @@ def node_types(graph):
             decision.append(n)
         elif graph.node[n]['type'] == 'utility':
             utility.append(n)
+        elif graph.node[n]['type'] is 'clique':
+            cliques.append(n)
 
-    nodes = {'chance': chance, 'decision': decision, 'utility': utility}
+    nodes = {'chance': chance, 'decision': decision, 'utility': utility, 'clique': cliques}
 
     return nodes
 
@@ -72,6 +76,54 @@ def draw_graph(graph, pos=None, size=600, alpha=0.9, show=False, save=False):
 
     node_dict = node_types(graph)
     chance, decision, utility = node_dict.get('chance'), node_dict.get('decision'), node_dict.get('utility')
+    # cliques = node_dict.get('clique')
+
+    if 'type' in graph.graph:
+        if graph.graph['type'] is 'moral':
+            print 'moral'
+            edges = []
+            moral_links = []
+            for u, v in graph.edges():
+                if graph[u][v]['type'] is 'moral':
+                    moral_links.append((u, v))
+                else:
+                    edges.append((u, v))
+            nx.draw_networkx_edges(graph, pos=p, edgelist=moral_links, edge_color='r', style='dashed')
+            nx.draw_networkx_edges(graph, pos=p, edgelist=edges)
+            nx.draw_networkx_labels(graph, pos=p)
+
+        elif graph.graph['type'] is 'triangulated':
+            print 'triangulated'
+            edges = []
+            triangulated_links = []
+            for u, v in graph.edges():
+                if graph[u][v]['type'] is 'triangulated':
+                    triangulated_links.append((u, v))
+                else:
+                    edges.append((u, v))
+            nx.draw_networkx_edges(graph, pos=p, edgelist=triangulated_links, edge_color='b', style='dashed')
+            nx.draw_networkx_edges(graph, pos=p, edgelist=edges)
+            nx.draw_networkx_labels(graph, pos=p)
+            # nx.draw_networkx_edges(graph, pos=p, edgelist=triangulated_links, edge_color='b', style='dashed')
+
+        elif graph.graph['type'] is 'junction_tree':
+            print 'junction_tree'
+            edge_labels = []
+            for u, v in graph.edges():
+                edge_labels.append(
+                    ((u, v), 'in: u=%(u_in).2f p=%(p_in).2f\nout: u=%(u_out).2f p=%(p_out).2f\n%(separator)s'
+                     % graph.get_edge_data(u, v)))
+            nx.draw_networkx(graph, pos=p)
+            nx.draw_networkx_edge_labels(graph, pos=p, edge_labels=dict(edge_labels),
+                                         bbox=dict(boxstyle='square', fc='w', ec='k'), rotate=False)
+
+        elif graph.graph['type'] is 'join_tree':
+            print 'join_tree'
+            nx.draw_networkx(graph, pos=p)
+    else:
+        print 'other'
+        nx.draw_networkx_edges(graph, pos=p)
+        nx.draw_networkx_labels(graph, pos=p)
 
     if len(chance) > 0:
         nx.draw_networkx_nodes(graph, p, nodelist=chance, node_size=size, node_shape='o', alpha=alpha, node_color='w')
@@ -81,8 +133,14 @@ def draw_graph(graph, pos=None, size=600, alpha=0.9, show=False, save=False):
         nx.draw_networkx_nodes(graph, p, nodelist=utility, node_size=size, node_shape='D', alpha=alpha, node_color='r')
 
     # Edges type: nx.draw_networkx_edges(G, pos, edgelist=edges, width=6, alpha=0.5, edge_color='b', style='dashed')
-    nx.draw_networkx_edges(graph, pos=p)
-    nx.draw_networkx_labels(graph, pos=p)
+
+    triangulated_links = nx.get_edge_attributes(graph, 'triangulated')
+
+    #if triangulated_links:
+        #nx.draw_networkx_edges(graph, pos=p, edgelist=triangulated_links, edge_color='b', style='dashed')
+
+    # nx.draw_networkx_edges(graph, pos=p)
+    # nx.draw_networkx_labels(graph, pos=p)
 
     if save:
         nx.write_dot(graph, title + '.dot')
