@@ -49,6 +49,33 @@ def node_types(graph):
 
     return nodes
 
+def edge_type(graph):
+    informational = []
+    functional = []
+    conditional = []
+    moral = []
+    triangulated = []
+
+    for e1, e2 in graph.edges_iter():
+        t = graph.edge[e1][e2]['type']
+        if t is 'informational':
+            informational.append((e1,e2))
+        elif t is 'functional':
+            functional.append((e1,e2))
+        elif t is 'conditional':
+            conditional.append((e1,e2))
+        elif t is 'moral':
+            moral.append((e1,e2))
+        elif t is 'triangulated':
+            triangulated.append((e1,e2))
+
+    edges = {'informational':informational, 'functional':functional,
+             'conditional':conditional, 'moral':moral,
+             'triangulated':triangulated}
+    return edges
+
+
+
 
 def node_type(n):
     return n['type']
@@ -81,13 +108,12 @@ def draw_graph(graph, pos=None, size=600, alpha=0.9, show=False, save=False):
     if 'type' in graph.graph:
         if graph.graph['type'] is 'moral':
             print 'moral'
+            edges_dict = edge_type(graph)
             edges = []
-            moral_links = []
-            for u, v in graph.edges():
-                if graph[u][v]['type'] is 'moral':
-                    moral_links.append((u, v))
-                else:
-                    edges.append((u, v))
+            moral_links = edges_dict.get('moral')
+            for e in graph.edges():
+                if e not in moral_links:
+                    edges.append(e)
             nx.draw_networkx_edges(graph, pos=p, edgelist=moral_links, edge_color='r', style='dashed')
             nx.draw_networkx_edges(graph, pos=p, edgelist=edges)
             nx.draw_networkx_labels(graph, pos=p)
@@ -95,12 +121,11 @@ def draw_graph(graph, pos=None, size=600, alpha=0.9, show=False, save=False):
         elif graph.graph['type'] is 'triangulated':
             print 'triangulated'
             edges = []
-            triangulated_links = []
-            for u, v in graph.edges():
-                if graph[u][v]['type'] is 'triangulated':
-                    triangulated_links.append((u, v))
-                else:
-                    edges.append((u, v))
+            edges_dict = edge_type(graph)
+            triangulated_links = edges_dict.get('triangulated')
+            for e in graph.edges():
+                if e not in triangulated_links:
+                    edges.append(e)
             nx.draw_networkx_edges(graph, pos=p, edgelist=triangulated_links, edge_color='b', style='dashed')
             nx.draw_networkx_edges(graph, pos=p, edgelist=edges)
             nx.draw_networkx_labels(graph, pos=p)
@@ -110,9 +135,9 @@ def draw_graph(graph, pos=None, size=600, alpha=0.9, show=False, save=False):
             print 'junction_tree'
             edge_labels = []
             for u, v in graph.edges():
-                edge_labels.append(
-                    ((u, v), 'in: u=%(u_in).2f p=%(p_in).2f\nout: u=%(u_out).2f p=%(p_out).2f\n%(separator)s'
-                     % graph.get_edge_data(u, v)))
+                edge_labels.append(((u, v),
+                                    'in: u=%(u_in).2f p=%(p_in).2f\nout: u=%(u_out).2f p=%(p_out).2f\n%(separator)s'
+                                    % graph.get_edge_data(u, v)))
             nx.draw_networkx(graph, pos=p)
             nx.draw_networkx_edge_labels(graph, pos=p, edge_labels=dict(edge_labels),
                                          bbox=dict(boxstyle='square', fc='w', ec='k'), rotate=False)
