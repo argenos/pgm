@@ -138,7 +138,7 @@ def draw_graph(graph, pos=None, size=600, alpha=0.9, show=False, save=False):
                 edge_labels.append(((u, v),
                                     'in: u=%(u_in).2f p=%(p_in).2f\nout: u=%(u_out).2f p=%(p_out).2f\n%(separator)s'
                                     % graph.get_edge_data(u, v)))
-            nx.draw_networkx(graph, pos=p)
+            nx.draw_networkx(graph, pos=p, node_size=900)
             nx.draw_networkx_edge_labels(graph, pos=p, edge_labels=dict(edge_labels),
                                          bbox=dict(boxstyle='square', fc='w', ec='k'), rotate=False)
 
@@ -148,7 +148,7 @@ def draw_graph(graph, pos=None, size=600, alpha=0.9, show=False, save=False):
     else:
         print 'other'
         nx.draw_networkx_edges(graph, pos=p)
-        nx.draw_networkx_labels(graph, pos=p)
+        nx.draw_networkx_labels(graph, pos=p, node_size=900)
 
     if len(chance) > 0:
         nx.draw_networkx_nodes(graph, p, nodelist=chance, node_size=size, node_shape='o', alpha=alpha, node_color='w')
