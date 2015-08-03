@@ -145,6 +145,7 @@ def draw_graph(graph, pos=None, size=600, alpha=0.9, show=False, save=False):
         elif graph.graph['type'] is 'join_tree':
             print 'join_tree'
             nx.draw_networkx(graph, pos=p)
+            nx.draw_networkx_edge_labels(graph, pos=p)
     else:
         print 'other'
         nx.draw_networkx_edges(graph, pos=p)
