@@ -42,7 +42,7 @@ def node_types(graph):
             decision.append(n)
         elif graph.node[n]['type'] == 'utility':
             utility.append(n)
-        elif graph.node[n]['type'] is 'clique':
+        elif graph.node[n]['type'] == 'clique':
             cliques.append(n)
 
     nodes = {'chance': chance, 'decision': decision, 'utility': utility, 'clique': cliques}
