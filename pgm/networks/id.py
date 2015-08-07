@@ -76,9 +76,6 @@ class ID(object):
         self.windows.update({n: unobserved})
         print 'Order', self.order
         print 'Windows: ', self.windows
-        # l = [[1, 2, 3, 4], [5, 6, 7, 8]]
-        # dict(tuple(zip(*l)))
-        # {1: 5, 2: 6, 3: 7, 4: 8}
 
     def show(self):
         nx.draw_networkx(self.net)
