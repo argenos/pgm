@@ -129,3 +129,259 @@ def assign_potentials(junction_tree, verbose=False):
     potentials_dict = dict(zip(cliques, potentials))
     clique_dict = dict(zip(cliques, nodes))
     return clique_dict, potentials_dict
+
+def collectR(junction_tree, rooted_tree, root):
+    print '-----------'
+    print root
+    jt = junction_tree.copy()
+    rt = rooted_tree.copy()
+    #print junction_tree.in_edges(root, data=True)
+    pot_dic = copy.deepcopy(potential_dict)
+    path = list(nx.dfs_postorder_nodes(rooted_tree))
+    print
+    #path = list(nx.dfs_postorder_nodes(junction_tree, root))
+    #path.reverse()
+    print path
+    #u = path.pop()
+    while path:
+        u = path.pop()
+        #Projecting current cluster to variables in separator
+        print '--------'
+        v = tuple(*rooted_tree.successors(u)) #each clique only has one child
+
+        prob_pot_u, util_pot_u = pot_dic.get(u)
+
+        if u is not root and rooted_tree.has_edge(u,v):
+            print u, v
+            for p in rooted_tree.predecessors(u):
+                print 'Getting potentials from separators'
+                su = jt.edge[p][u]['u_pot']
+                sp = jt.edge[p][u]['p_pot']
+
+                if not isinstance(sp, int):
+                    prob_pot_u.extend(sp)
+                else:
+                    prob_pot_u.append(sp)
+
+                if not isinstance(su, int):
+                    util_pot_u.extend(su)
+                else:
+                    util_pot_u.append(su)
+
+            prob_pot_u = multiply_potentials(prob_pot_u)
+            util_pot_u = multiply_potentials(util_pot_u)
+
+            d = jt.get_edge_data(u, v)
+            sum_out = list(set(u) - set(d['separator']))
+            sum_out.sort(key=order.get, reverse=True)
+            for ns in sum_out:
+                if net.node[ns]['type'] == 'chance':
+                    print 'Marginalize ', ns
+                    prob_pot_u = marginalize(ns, prob_pot_u)
+                    util_pot_u = marginalize(ns, util_pot_u)
+                    #print util_pot_u
+                    #print
+                    #print prob_pot_u
+                    #print
+                elif net.node[ns]['type'] == 'decision':
+                    print 'Marginalize ', ns
+                    group_potentials(ns, util_pot_u)
+                    util_pot_u, prob_pot_u = maxd(ns, util_pot_u, prob_pot_u)
+                    #print util_pot_u
+                    #print
+                    #print prob_pot_u
+                    #print
+                elif net.node[ns]['type'] == 'utility':
+                    print 'Marginalize ', ns
+            jt[u][v]['u_pot']= util_pot_u
+            jt[u][v]['p_pot']= prob_pot_u
+        else:
+            print u
+
+
+        #u = v
+    #print '****'
+    #print pot_dic.get(('E', 'B', 'D', 'F', 'D1'))
+    return jt
+
+def distributeR(junction_tree, rooted_tree, root):
+    print '-----------'
+    print root
+    jt = junction_tree.copy()
+    #rt = rooted_tree.copy()
+    rt = rooted_tree.reverse(copy=True)
+    pot_dic = copy.deepcopy(potential_dict)
+    path = list(nx.dfs_postorder_nodes(rt, root))#.reverse()
+    #path.reverse()
+    print path
+
+    root_separators = {}
+    while path:
+        u = path.pop()
+        #Projecting current cluster to variables in separator
+        print '-'*60
+        print u
+        prob_pot_u, util_pot_u = pot_dic.get(u)
+
+        v = tuple(*rt.predecessors(u))
+
+        if u is root:
+            for v1, u1, d1 in jt.in_edges(u, data=True):
+                print v1
+                prob = prob_pot_u[:]
+                util = util_pot_u[:]
+                for v2, u2, d2 in jt.in_edges(u, data=True):
+                    if not v1 == v2:
+                        prob.extend(d2['p_pot'])
+                        util.extend(d2['u_pot'])
+
+                prob = multiply_potentials(prob)
+                util = multiply_potentials(util)
+                #print util
+                #print prob
+
+                sum_out = list(set(u) - set(d1['separator']))
+                sum_out.sort(key=order.get, reverse=True)
+                for ns in sum_out:
+                    if net.node[ns]['type'] == 'chance':
+                        print 'Marginalize ', ns
+                        prob = marginalize([ns], prob)
+                        util = marginalize([ns], util)
+                        #print util
+                        #print
+                        #print prob
+                        #print
+                    elif net.node[ns]['type'] == 'decision':
+                        print 'Marginalize ', ns
+                        ut, u_ns = group_potentials(ns, util)
+                        pt, p_ns = group_potentials(ns, prob)
+
+                        util, prob = maxd(ns, u_ns, p_ns)
+                        util.extend(ut)
+                        prob.extend(pt)
+                        #print util
+                        #print
+                        #print prob
+                        #print
+                    elif net.node[ns]['type'] == 'utility':
+                        print 'Marginalize ', ns
+                #print util
+                #print prob
+                jt[root][v1]['u_pot']= util
+                jt[root][v1]['p_pot']= prob
+        else:
+            #v = tuple(*rooted_tree.successors(u)) #each clique only has one child
+            if rt.successors(u):
+                for p in rt.predecessors(u):
+                    print 'Getting potentials from separators'
+                    su = jt.edge[p][u]['u_pot']
+                    sp = jt.edge[p][u]['p_pot']
+
+                    if not isinstance(sp, int):
+                        prob_pot_u.extend(sp)
+                    else:
+                        prob_pot_u.append(sp)
+
+                    if not isinstance(su, int):
+                        util_pot_u.extend(su)
+                    else:
+                        util_pot_u.append(su)
+
+                prob_pot_u = multiply_potentials(prob_pot_u)
+                util_pot_u = multiply_potentials(util_pot_u)
+
+                for v in rt.successors(u):
+                    prob = prob_pot_u[:]
+                    util = util_pot_u[:]
+
+                    d = jt.get_edge_data(u, v)
+                    sum_out = list(set(u) - set(d['separator']))
+                    sum_out.sort(key=order.get, reverse=True)
+                    for ns in sum_out:
+                        if net.node[ns]['type'] == 'chance':
+                            print 'Marginalize ', ns
+                            prob = marginalize([ns], prob)
+                            util = marginalize([ns], util)
+                            #print util_pot_u
+                            #print
+                            #print prob_pot_u
+                            #print
+                        elif net.node[ns]['type'] == 'decision':
+                            print 'Marginalize ', ns
+                            ut, u_ns = group_potentials(ns, util)
+                            pt, p_ns = group_potentials(ns, prob)
+
+                            util, prob = maxd(ns, u_ns, p_ns)
+                            util.extend(ut)
+                            prob.extend(pt)
+                            #print util_pot_u
+                            #print
+                            #print prob_pot_u
+                            #print
+                        elif net.node[ns]['type'] == 'utility':
+                            print 'Marginalize ', ns
+                    jt[u][v]['u_pot']= util
+                    jt[u][v]['p_pot']= prob
+    return jt
+
+def query(var, junction_tree):
+    pot_dic = copy.deepcopy(potential_dict)
+    jt = junction_tree.copy()
+    #print clique_dict
+    cliques = []
+    print
+    for c, d in clique_dict.items():
+        if var in d:
+            cliques.append(c)
+            break
+
+    clique = cliques.pop()
+    in_edges = jt.in_edges(clique, data=True)
+    print clique
+    prob, util = pot_dic.get(clique)
+    #print list(jt.in_edges(clique))
+    for u, v, d in jt.in_edges(clique, data=True):
+        #print u
+        prob.extend(d['p_pot'])
+        util.extend(d['u_pot'])
+
+    prob = multiply_potentials(prob)
+    util = multiply_potentials(util)
+
+    sum_out = list(clique)
+    sum_out.remove(var)
+    sum_out.sort(key=order.get, reverse=True)
+    for ns in sum_out:
+        if net.node[ns]['type'] == 'chance':
+            print 'Marginalize ', ns
+            print prob
+            print
+            print util
+            print
+            prob = marginalize([ns], prob)
+            util = marginalize([ns], util)
+            print prob
+            print
+            print util
+            print
+        elif net.node[ns]['type'] == 'decision':
+            print 'Marginalize ', ns
+            print prob
+            print
+            print util
+            print
+
+            ut, u_ns = group_potentials(ns, util)
+            pt, p_ns = group_potentials(ns, prob)
+
+            util, prob = maxd(ns, u_ns, p_ns)
+            util.extend(ut)
+            prob.extend(pt)
+
+        elif net.node[ns]['type'] == 'utility':
+            print 'Marginalize ', ns
+
+    print prob
+    print util
+
+
